@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   Wallet,
   TrendingUp,
@@ -109,7 +110,7 @@ export default function AdminDashboardPage() {
       {/* Baris Kedua: Jurnal Mutasi & Aksi Cepat Bendahara */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Kolom Kiri: Catatan Kas Terbaru */}
-        <div className="lg:col-span-2">
+        <div id="transaksi" className="lg:col-span-2 scroll-mt-20">
           <RecentTransactions transactions={mockTransaksi} limit={5} />
         </div>
 
@@ -164,26 +165,25 @@ export default function AdminDashboardPage() {
                 </span>
               </Button>
 
-              <Button
-                variant="outline"
-                onClick={() => handleQuickAction("Tambah Rumah / Warga Baru")}
-                className="w-full justify-between h-11 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+              <Link
+                href="/dashboard/admin/warga"
+                className="w-full flex items-center justify-between h-11 px-4 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-bold hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors text-slate-800 dark:text-zinc-200"
               >
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-200 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 font-bold">
                     <UserPlus className="h-4 w-4" />
                   </div>
-                  <span>+ Tambah Rumah / KK Baru</span>
+                  <span>Kelola & Tambah Warga</span>
                 </div>
                 <span className="text-[10px] text-slate-500 font-medium">
-                  64 Rumah
+                  Buka Halaman →
                 </span>
-              </Button>
+              </Link>
             </CardContent>
           </Card>
 
           {/* Card Status Iuran 64 Rumah */}
-          <Card className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm p-5 space-y-4">
+          <Card id="warga" className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm p-5 space-y-4 scroll-mt-20">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-2.5">
               <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center gap-1.5">
                 <Users className="h-4 w-4 text-emerald-600" />

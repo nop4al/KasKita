@@ -46,6 +46,22 @@ export function DashboardSidebar() {
   const isAdmin = pathname.startsWith("/dashboard/admin");
   const isWarga = pathname.startsWith("/dashboard/warga");
 
+  const [totalWarga, setTotalWarga] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    // Ambil jumlah user secara dinamis
+    fetch("/api/users")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && typeof data.total === "number") {
+          setTotalWarga(data.total);
+        }
+      })
+      .catch(() => {
+        // Abaikan jika offline / belum login
+      });
+  }, [pathname]);
+
   const adminMenu: MenuItem[] = [
     {
       title: "Ringkasan Kas RT",
@@ -55,10 +71,10 @@ export function DashboardSidebar() {
     },
     {
       title: "Data Warga (KK)",
-      url: "/dashboard/admin#warga",
+      url: "/dashboard/admin/warga",
       icon: Users,
-      badge: "64 KK",
-      active: false,
+      badge: totalWarga !== null ? `${totalWarga} KK` : "...",
+      active: pathname === "/dashboard/admin/warga",
     },
     {
       title: "Catat Uang Kas",
@@ -137,21 +153,19 @@ export function DashboardSidebar() {
             <SidebarMenu className="gap-1 mt-1">
               {currentMenu.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    isActive={item.active}
-                    className="h-10 px-3 rounded-xl font-bold text-xs transition-colors hover:bg-emerald-50 dark:hover:bg-zinc-800 data-[active=true]:bg-emerald-600 data-[active=true]:text-white"
-                    render={
-                      <Link href={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span className="flex-1">{item.title}</span>
-                        {item.badge && (
-                          <span className="text-[11px] font-medium opacity-80">
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    }
-                  />
+                  <Link
+                    href={item.url}
+                    data-active={item.active}
+                    className="flex items-center gap-2.5 h-10 px-3 rounded-xl font-bold text-xs transition-colors hover:bg-emerald-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 data-[active=true]:bg-emerald-600 data-[active=true]:text-white"
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span className="flex-1">{item.title}</span>
+                    {item.badge && (
+                      <span className="text-[11px] font-medium opacity-80">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -168,39 +182,33 @@ export function DashboardSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="gap-1 mt-1">
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={isAdmin}
-                  className="h-9 px-3 rounded-xl text-xs font-bold data-[active=true]:bg-emerald-50 data-[active=true]:text-emerald-800 dark:data-[active=true]:bg-emerald-950/60 dark:data-[active=true]:text-emerald-300"
-                  render={
-                    <Link href="/dashboard/admin">
-                      <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                      <span>Mode Pengurus RT</span>
-                    </Link>
-                  }
-                />
+                <Link
+                  href="/dashboard/admin"
+                  data-active={isAdmin}
+                  className="flex items-center gap-2.5 h-9 px-3 rounded-xl text-xs font-bold transition-colors hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 data-[active=true]:bg-emerald-50 data-[active=true]:text-emerald-800 dark:data-[active=true]:bg-emerald-950/60 dark:data-[active=true]:text-emerald-300"
+                >
+                  <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>Mode Pengurus RT</span>
+                </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={isWarga}
-                  className="h-9 px-3 rounded-xl text-xs font-bold data-[active=true]:bg-blue-50 data-[active=true]:text-blue-800 dark:data-[active=true]:bg-blue-950/60 dark:data-[active=true]:text-blue-300"
-                  render={
-                    <Link href="/dashboard/warga">
-                      <UserCheck className="h-4 w-4 text-blue-600" />
-                      <span>Mode Warga</span>
-                    </Link>
-                  }
-                />
+                <Link
+                  href="/dashboard/warga"
+                  data-active={isWarga}
+                  className="flex items-center gap-2.5 h-9 px-3 rounded-xl text-xs font-bold transition-colors hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 data-[active=true]:bg-blue-50 data-[active=true]:text-blue-800 dark:data-[active=true]:bg-blue-950/60 dark:data-[active=true]:text-blue-300"
+                >
+                  <UserCheck className="h-4 w-4 text-blue-600 shrink-0" />
+                  <span>Mode Warga</span>
+                </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  className="h-9 px-3 rounded-xl text-xs font-medium text-slate-600 dark:text-zinc-400 hover:text-slate-900"
-                  render={
-                    <Link href="/">
-                      <Home className="h-4 w-4 text-slate-400" />
-                      <span>Halaman Depan (Semua RT)</span>
-                    </Link>
-                  }
-                />
+                <Link
+                  href="/"
+                  className="flex items-center gap-2.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-600 dark:text-zinc-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <Home className="h-4 w-4 text-slate-400 shrink-0" />
+                  <span>Halaman Depan (Semua RT)</span>
+                </Link>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>

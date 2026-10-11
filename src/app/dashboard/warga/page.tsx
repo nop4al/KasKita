@@ -235,7 +235,7 @@ export default function WargaDashboardPage() {
       </Card>
 
       {/* 2 Kartu Info Lingkungan Ramah */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
+      <section id="laporan" className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5 scroll-mt-20">
         <StatCard
           badgeText="TRANSPARAN"
           title="Uang Kas RT 04 Sekarang"
@@ -260,7 +260,7 @@ export default function WargaDashboardPage() {
       </section>
 
       {/* Riwayat Pembayaran Iuran Warga */}
-      <Card className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+      <Card id="riwayat" className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden scroll-mt-20">
         <CardHeader className="bg-slate-50/70 dark:bg-zinc-800/40 p-5 border-b border-slate-100 dark:border-zinc-800">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>

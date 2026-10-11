@@ -42,7 +42,7 @@ export default function Home() {
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
               <Link
-                href="/dashboard/admin"
+                href="/login"
                 className={cn(
                   buttonVariants({ variant: "default" }),
                   "bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold h-12 px-7 rounded-2xl shadow-sm gap-2 text-xs uppercase tracking-wider"
@@ -53,7 +53,7 @@ export default function Home() {
               </Link>
 
               <Link
-                href="/dashboard/warga"
+                href="/login"
                 className={cn(
                   buttonVariants({ variant: "outline" }),
                   "font-extrabold h-12 px-7 rounded-2xl gap-2 text-xs uppercase tracking-wider border-slate-300 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900"
