@@ -79,3 +79,54 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function GET(request: Request) {
+  try {
+    const session = await getSessionFromCookie();
+    if (!session) {
+      return Response.json(
+        { success: false, error: "Silakan login terlebih dahulu." },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const month = searchParams.get("month"); // Format: "MM" (misal: "10")
+    const year = searchParams.get("year");   // Format: "YYYY" (misal: "2026")
+
+    const supabase = await createSupabaseServerClient();
+    let query = supabase
+      .from("ledger_transactions")
+      .select("*")
+      .order("transaction_date", { ascending: false });
+
+    // Jika ada filter bulan dan tahun dari frontend
+    if (year && month) {
+      const startDate = `${year}-${month.padStart(2, "0")}-01`;
+      // Cari sampai akhir bulan
+      const lastDay = new Date(Number(year), Number(month), 0).getDate();
+      const endDate = `${year}-${month.padStart(2, "0")}-${lastDay}`;
+      query = query.gte("transaction_date", startDate).lte("transaction_date", endDate);
+    } else if (year) {
+      const startDate = `${year}-01-01`;
+      const endDate = `${year}-12-31`;
+      query = query.gte("transaction_date", startDate).lte("transaction_date", endDate);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return Response.json(
+      { success: true, data },
+      { status: 200 }
+    );
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("Get transactions API error:", error);
+    return Response.json(
+      { success: false, error: "Gagal mengambil data transaksi kas." },
+      { status: 500 }
+    );
+  }
+}
