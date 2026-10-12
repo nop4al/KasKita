@@ -1,13 +1,30 @@
-/**
- * dashboard-data.ts — Dashboard summary data service for KasKita
- *
- * Provides API functions to compute dashboard metrics like
- * total saldo, pemasukan/pengeluaran bulan ini, and total warga.
- */
+import type { Database } from "@/lib/supabase/database.types";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-import { getWargaCount } from "./auth";
+type TransactionRow = Database["public"]["Tables"]["ledger_transactions"]["Row"];
+type DueRow = Database["public"]["Tables"]["dues"]["Row"];
 
-// ── Types ──────────────────────────────────────────────────────────
+export interface Transaksi {
+  id: string;
+  nomorBukti: string;
+  tanggal: string;
+  keterangan: string;
+  nominal: number;
+  tipe: "Pemasukan" | "Pengeluaran";
+  kategori: string;
+  penanggungJawab: string;
+}
+
+export interface RiwayatIuranItem {
+  id: string;
+  nomorResi: string;
+  bulan: string;
+  tanggalBayar: string;
+  nominal: number;
+  metode: string;
+  status: "Lunas" | "Belum Lunas";
+}
+
 export interface DashboardSummary {
   totalSaldo: number;
   pemasukanBulanIni: number;
@@ -17,9 +34,10 @@ export interface DashboardSummary {
   wargaPending: number;
   iuranLunas: number;
   iuranBelumLunas: number;
-  totalRumah: number;
+  totalWargaAktif: number;
   bulan: string;
   tahun: string;
+  transaksi: Transaksi[];
 }
 
 export interface WargaDashboardSummary {
@@ -29,129 +47,172 @@ export interface WargaDashboardSummary {
   tahun: string;
   nominalIuran: number;
   jatuhTempo: string;
+  iuranWarga: {
+    bulan: string;
+    tahun: string;
+    status: "Lunas" | "Belum Lunas";
+    jatuhTempo: string;
+    nominal: number;
+    rincian: { kebersihan: number; keamanan: number };
+    nomorBukti: string;
+    warga: {
+      nama: string;
+      noRumah: string;
+      blok: string;
+      noKK: string;
+      rtRw: string;
+    };
+  };
+  riwayatIuran: RiwayatIuranItem[];
+  iuranTerakhirLunas: RiwayatIuranItem | null;
 }
 
-// ── In-memory transaction ledger (simplified) ──────────────────────
-interface LedgerEntry {
-  id: string;
-  tanggal: string;
-  tipe: "Pemasukan" | "Pengeluaran";
-  nominal: number;
-  keterangan: string;
-  kategori: string;
-}
-
-const ledger: LedgerEntry[] = [
-  {
-    id: "TRX-001",
-    tanggal: "2026-10-09",
-    tipe: "Pemasukan",
-    nominal: 750000,
-    keterangan: "Iuran Bulanan Warga Gang Mawar (15 Rumah)",
-    kategori: "Iuran Warga",
-  },
-  {
-    id: "TRX-002",
-    tanggal: "2026-10-07",
-    tipe: "Pengeluaran",
-    nominal: 180000,
-    keterangan: "Beli 4 Bohlam Lampu Jalan Gang 3 & Kabel",
-    kategori: "Fasilitas Umum",
-  },
-  {
-    id: "TRX-003",
-    tanggal: "2026-10-05",
-    tipe: "Pemasukan",
-    nominal: 500000,
-    keterangan: "Iuran Sampah & Ronda Gang Melati (10 Rumah)",
-    kategori: "Iuran Warga",
-  },
-  {
-    id: "TRX-004",
-    tanggal: "2026-10-03",
-    tipe: "Pengeluaran",
-    nominal: 170000,
-    keterangan: "Beli Gorengan & Kopi Kerja Bakti Bersihin Selokan",
-    kategori: "Kegiatan Warga",
-  },
-  {
-    id: "TRX-005",
-    tanggal: "2026-10-01",
-    tipe: "Pemasukan",
-    nominal: 250000,
-    keterangan: "Sumbangan Sukarela Warga No. 12 Buat Pos Kamling",
-    kategori: "Donasi Warga",
-  },
-];
-
-// Baseline saldo from months before
-const BASE_SALDO = 3900000;
-
-// ── Public API ─────────────────────────────────────────────────────
-
-/**
- * Get dashboard summary (admin-level).
- */
-export function getAdminDashboardSummary(): DashboardSummary {
-  const now = new Date();
-  const bulanStr = now.toLocaleDateString("id-ID", { month: "long" });
-  const tahun = now.getFullYear().toString();
-
-  // Compute October 2026 totals
-  let pemasukanBulanIni = 0;
-  let pengeluaranBulanIni = 0;
-
-  for (const entry of ledger) {
-    if (entry.tanggal.startsWith("2026-10")) {
-      if (entry.tipe === "Pemasukan") pemasukanBulanIni += entry.nominal;
-      else pengeluaranBulanIni += entry.nominal;
-    }
-  }
-
-  const totalSaldo = BASE_SALDO + pemasukanBulanIni - pengeluaranBulanIni;
-  const wargaCount = getWargaCount();
-
+function toTransaction(row: TransactionRow): Transaksi {
   return {
-    totalSaldo,
-    pemasukanBulanIni,
-    pengeluaranBulanIni,
-    totalWarga: wargaCount.total,
-    wargaAktif: wargaCount.active,
-    wargaPending: wargaCount.pending,
-    iuranLunas: 48,
-    iuranBelumLunas: 16,
-    totalRumah: 64,
-    bulan: bulanStr,
-    tahun,
+    id: row.id,
+    nomorBukti: row.receipt_number,
+    tanggal: row.transaction_date,
+    keterangan: row.description,
+    nominal: row.amount,
+    tipe: row.type === "income" ? "Pemasukan" : "Pengeluaran",
+    kategori: row.category,
+    penanggungJawab: row.person_in_charge,
   };
 }
 
-/**
- * Get warga dashboard summary (warga-level).
- */
-export function getWargaDashboardSummary(userId: string): WargaDashboardSummary {
+function periodLabel(period: string): string {
+  const [year, month] = period.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleDateString("id-ID", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function dueDateFor(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function mapDue(row: DueRow): RiwayatIuranItem {
+  return {
+    id: row.id,
+    nomorResi: row.receipt_number ?? "",
+    bulan: periodLabel(row.period),
+    tanggalBayar: row.paid_at?.slice(0, 10) ?? "",
+    nominal: row.amount,
+    metode: row.payment_method ?? "-",
+    status: row.status === "paid" ? "Lunas" : "Belum Lunas",
+  };
+}
+
+export async function getAdminDashboardSummary(): Promise<DashboardSummary> {
+  const supabase = await createSupabaseServerClient();
+  const [totalsResult, profilesResult, duesResult, transactionsResult] =
+    await Promise.all([
+      supabase.from("ledger_summary").select("*").single(),
+      supabase.from("profiles").select("status").eq("role", "warga"),
+      supabase.from("dues").select("status").eq("period", new Date().toISOString().slice(0, 7) + "-01"),
+      supabase
+        .from("ledger_transactions")
+        .select("*")
+        .order("transaction_date", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(5),
+    ]);
+
+  if (totalsResult.error) throw totalsResult.error;
+  if (profilesResult.error) throw profilesResult.error;
+  if (duesResult.error) throw duesResult.error;
+  if (transactionsResult.error) throw transactionsResult.error;
+
+  const profiles = profilesResult.data;
+  const activeCount = profiles.filter((profile) => profile.status === "active").length;
+  const paidCount = duesResult.data.filter((due) => due.status === "paid").length;
   const now = new Date();
-  const bulanStr = now.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
-  const tahun = now.getFullYear().toString();
+  return {
+    totalSaldo: totalsResult.data.balance,
+    pemasukanBulanIni: totalsResult.data.month_income,
+    pengeluaranBulanIni: totalsResult.data.month_expense,
+    totalWarga: profiles.length,
+    wargaAktif: activeCount,
+    wargaPending: profiles.length - activeCount,
+    iuranLunas: paidCount,
+    iuranBelumLunas: Math.max(activeCount - paidCount, 0),
+    totalWargaAktif: activeCount,
+    bulan: now.toLocaleDateString("id-ID", { month: "long" }),
+    tahun: String(now.getFullYear()),
+    transaksi: transactionsResult.data.map(toTransaction),
+  };
+}
 
-  // Simulate: userId "warga-001" (Ahmad Fauzi) is lunas, others may vary
-  const isLunas = userId === "warga-001";
+export async function getWargaDashboardSummary(
+  userId: string
+): Promise<WargaDashboardSummary> {
+  const supabase = await createSupabaseServerClient();
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const currentPeriod = `${year}-${String(month).padStart(2, "0")}-01`;
 
-  // Compute total kas from ledger
-  let totalPemasukan = 0;
-  let totalPengeluaran = 0;
-  for (const entry of ledger) {
-    if (entry.tipe === "Pemasukan") totalPemasukan += entry.nominal;
-    else totalPengeluaran += entry.nominal;
-  }
-  const totalSaldo = BASE_SALDO + totalPemasukan - totalPengeluaran;
+  const [profileResult, settingsResult, currentDueResult, duesResult, totalsResult] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", userId).single(),
+      supabase.from("app_settings").select("*").eq("id", 1).single(),
+      supabase
+        .from("dues")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("period", currentPeriod)
+        .maybeSingle(),
+      supabase
+        .from("dues")
+        .select("*")
+        .eq("user_id", userId)
+        .order("period", { ascending: false })
+        .limit(12),
+      supabase.from("ledger_summary").select("balance").single(),
+    ]);
+
+  if (profileResult.error) throw profileResult.error;
+  if (settingsResult.error) throw settingsResult.error;
+  if (currentDueResult.error) throw currentDueResult.error;
+  if (duesResult.error) throw duesResult.error;
+  if (totalsResult.error) throw totalsResult.error;
+
+  const currentDue = currentDueResult.data;
+  const settings = settingsResult.data;
+  const monthLabel = periodLabel(currentPeriod);
+  const dueDate = currentDue?.due_date ??
+    dueDateFor(year, month, settings.due_day);
+  const history = duesResult.data.map(mapDue);
+  const paidHistory = history.find((item) => item.status === "Lunas") ?? null;
 
   return {
-    totalSaldoKasRT: totalSaldo,
-    statusIuranBulanIni: isLunas ? "Lunas" : "Belum Lunas",
-    bulanIni: bulanStr,
-    tahun,
-    nominalIuran: 50000,
-    jatuhTempo: `${tahun}-10-31`,
+    totalSaldoKasRT: totalsResult.data.balance,
+    statusIuranBulanIni: currentDue?.status === "paid" ? "Lunas" : "Belum Lunas",
+    bulanIni: monthLabel,
+    tahun: String(year),
+    nominalIuran: currentDue?.amount ?? settings.monthly_dues,
+    jatuhTempo: dueDate,
+    iuranWarga: {
+      bulan: monthLabel,
+      tahun: String(year),
+      status: currentDue?.status === "paid" ? "Lunas" : "Belum Lunas",
+      jatuhTempo: dueDate,
+      nominal: currentDue?.amount ?? settings.monthly_dues,
+      rincian: {
+        kebersihan: currentDue?.cleaning_fee ?? settings.cleaning_fee,
+        keamanan: currentDue?.security_fee ?? settings.security_fee,
+      },
+      nomorBukti: currentDue?.receipt_number ?? "",
+      warga: {
+        nama: profileResult.data.nama,
+        noRumah: profileResult.data.no_rumah ?? "-",
+        blok: profileResult.data.blok ?? "-",
+        noKK: "",
+        rtRw: "RT 04 / RW 08",
+      },
+    },
+    riwayatIuran: history,
+    iuranTerakhirLunas: paidHistory,
   };
 }

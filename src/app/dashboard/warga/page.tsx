@@ -7,15 +7,11 @@ import {
   Wallet,
   CheckCircle2,
   Calendar,
-  CreditCard,
   QrCode,
   Sparkles,
   Receipt,
   FileCheck,
   Printer,
-  Clock,
-  Check,
-  Share2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -38,26 +34,56 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  formatRupiah,
   mockIuranWarga,
   mockStats,
   mockRiwayatIuran,
-  formatRupiah,
 } from "@/lib/mock-data";
+import type { WargaDashboardSummary } from "@/lib/dashboard-data";
 
 export default function WargaDashboardPage() {
-  const [statusIuran, setStatusIuran] = React.useState<"Lunas" | "Belum Lunas">(
-    mockIuranWarga.status
-  );
+  const [summary, setSummary] = React.useState<WargaDashboardSummary | null>(null);
+  const [simulatedStatus, setSimulatedStatus] = React.useState<"Lunas" | "Belum Lunas" | null>(null);
 
-  const formattedJatuhTempo = React.useMemo(() => {
-    try {
-      return format(parseISO(mockIuranWarga.jatuhTempo), "d MMMM yyyy", {
-        locale: idLocale,
-      });
-    } catch {
-      return mockIuranWarga.jatuhTempo;
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function loadSummary() {
+      try {
+        const response = await fetch("/api/dashboard/summary");
+        const result = await response.json() as {
+          success?: boolean;
+          data?: WargaDashboardSummary;
+          error?: string;
+        };
+        if (!response.ok || !result.success || !result.data) {
+          throw new Error(result.error || "Gagal memuat data iuran.");
+        }
+        if (!cancelled) setSummary(result.data);
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(error instanceof Error ? error.message : "Gagal memuat data iuran.");
+        }
+      }
     }
+
+    void loadSummary();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const invoice = summary?.iuranWarga ?? mockIuranWarga;
+  const riwayatIuran = summary?.riwayatIuran ?? mockRiwayatIuran;
+  const isLunas = simulatedStatus ?? invoice.status;
+  let formattedJatuhTempo = invoice.jatuhTempo;
+  try {
+    formattedJatuhTempo = format(parseISO(invoice.jatuhTempo), "d MMMM yyyy", {
+      locale: idLocale,
+    });
+  } catch {
+    // Keep the ISO date if it cannot be formatted.
+  }
 
   const handleBayar = () => {
     toast.success("Membuka instruksi pembayaran QRIS KasKita RT 04.");
@@ -68,12 +94,10 @@ export default function WargaDashboardPage() {
   };
 
   const toggleSimulasiStatus = () => {
-    const nextStatus = statusIuran === "Lunas" ? "Belum Lunas" : "Lunas";
-    setStatusIuran(nextStatus);
+    const nextStatus = isLunas ? "Belum Lunas" : "Lunas";
+    setSimulatedStatus(nextStatus);
     toast.info(`Simulasi status diubah: ${nextStatus}`);
   };
-
-  const isLunas = statusIuran === "Lunas";
 
   return (
     <div className="space-y-6">
@@ -125,9 +149,9 @@ export default function WargaDashboardPage() {
                 KWITANSI IURAN BULANAN
               </span>
               <h3 className="text-base font-extrabold text-slate-900 dark:text-zinc-100">
-                {mockIuranWarga.warga.nama}{" "}
+                {invoice.warga.nama}{" "}
                 <span className="text-xs font-normal text-slate-500">
-                  ({mockIuranWarga.warga.blok} / {mockIuranWarga.warga.noRumah})
+                  ({invoice.warga.blok} / {invoice.warga.noRumah})
                 </span>
               </h3>
             </div>
@@ -135,7 +159,7 @@ export default function WargaDashboardPage() {
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-mono font-bold bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-lg text-slate-600 dark:text-zinc-300">
-              No: {mockIuranWarga.nomorBukti}
+              No: {invoice.nomorBukti || "Belum diterbitkan"}
             </span>
           </div>
         </div>
@@ -149,7 +173,7 @@ export default function WargaDashboardPage() {
                   Tagihan Periode
                 </span>
                 <p className="text-2xl font-black text-slate-900 dark:text-zinc-100">
-                  {mockIuranWarga.bulan}
+                  {invoice.bulan}
                 </p>
               </div>
 
@@ -161,7 +185,7 @@ export default function WargaDashboardPage() {
                     Iuran Pengangkutan Sampah &amp; Kebersihan
                   </span>
                   <span className="font-bold text-sm">
-                    {formatRupiah(mockIuranWarga.rincian.kebersihan)}
+                    {formatRupiah(invoice.rincian.kebersihan)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-slate-700 dark:text-zinc-300">
@@ -170,13 +194,13 @@ export default function WargaDashboardPage() {
                     Iuran Keamanan Lingkungan &amp; Pos Ronda
                   </span>
                   <span className="font-bold text-sm">
-                    {formatRupiah(mockIuranWarga.rincian.keamanan)}
+                    {formatRupiah(invoice.rincian.keamanan)}
                   </span>
                 </div>
                 <div className="pt-2.5 border-t border-slate-100 dark:border-zinc-800 flex justify-between items-center text-sm font-extrabold text-slate-900 dark:text-zinc-100">
                   <span>Total Iuran Bulanan</span>
                   <span className="text-base text-emerald-600 dark:text-emerald-400">
-                    {formatRupiah(mockIuranWarga.nominal)}
+                    {formatRupiah(invoice.nominal)}
                   </span>
                 </div>
               </div>
@@ -239,7 +263,7 @@ export default function WargaDashboardPage() {
         <StatCard
           badgeText="TRANSPARAN"
           title="Uang Kas RT 04 Sekarang"
-          value={mockStats.totalSaldo}
+          value={summary?.totalSaldoKasRT ?? mockStats.totalSaldo}
           icon={Wallet}
           variant="emerald"
           description="Terbuka untuk dipantau seluruh warga RT 04"
@@ -248,14 +272,16 @@ export default function WargaDashboardPage() {
         />
         <StatCard
           badgeText="BULAN LALU"
-          title="Iuran Bulan September 2026"
+          title={summary?.iuranTerakhirLunas?.bulan ?? "Iuran Bulan September 2026"}
           value="Sudah Lunas"
           icon={CheckCircle2}
           variant="emerald"
           isCurrency={false}
-          description="Tercatat lunas disetor ke bendahara pada 4 September"
+          description={summary?.iuranTerakhirLunas?.tanggalBayar
+            ? `Tercatat lunas disetor ke bendahara pada ${summary.iuranTerakhirLunas.tanggalBayar}.`
+            : "Tercatat lunas disetor ke bendahara pada 4 September"}
           subLabel="Bukti Setor"
-          subValue="Kwitansi Sah"
+          subValue={summary?.iuranTerakhirLunas?.nomorResi || "Kwitansi Sah"}
         />
       </section>
 
@@ -300,12 +326,14 @@ export default function WargaDashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockRiwayatIuran.map((item) => {
+              {riwayatIuran.map((item) => {
                 let formattedDate = item.tanggalBayar;
                 try {
-                  formattedDate = format(parseISO(item.tanggalBayar), "d MMMM yyyy", {
+                  formattedDate = item.tanggalBayar
+                    ? format(parseISO(item.tanggalBayar), "d MMMM yyyy", {
                     locale: idLocale,
-                  });
+                  })
+                    : "—";
                 } catch {
                   // fallback
                 }

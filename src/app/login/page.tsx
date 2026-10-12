@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   Landmark,
   LogIn,
@@ -33,9 +33,7 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "";
   const pesan = searchParams.get("pesan") || "";
 
   const [email, setEmail] = React.useState("");
@@ -72,14 +70,9 @@ function LoginForm() {
 
       toast.success(data.message);
 
-      // Redirect based on role or redirect param
-      if (redirectTo) {
-        router.push(redirectTo);
-      } else if (data.user.role === "admin") {
-        router.push("/dashboard/admin");
-      } else {
-        router.push("/dashboard/warga");
-      }
+      window.location.replace(
+        data.user.role === "admin" ? "/dashboard/admin" : "/dashboard/warga"
+      );
     } catch {
       setError("Tidak bisa terhubung ke server. Coba lagi nanti.");
       setLoading(false);

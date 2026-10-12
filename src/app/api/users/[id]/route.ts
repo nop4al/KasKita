@@ -5,6 +5,7 @@
  */
 
 import { type NextRequest } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import {
   getSessionFromCookie,
   getUserById,
@@ -26,7 +27,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const user = getUserById(id);
+    const user = await getUserById(id);
     if (!user) {
       return Response.json(
         { success: false, error: "Warga tidak ditemukan." },
@@ -35,7 +36,9 @@ export async function GET(
     }
 
     return Response.json({ success: true, user });
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("Get user API error:", error);
     return Response.json(
       { success: false, error: "Terjadi kesalahan server." },
       { status: 500 }
@@ -58,7 +61,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const result = updateUser(id, body);
+    const result = await updateUser(id, body);
 
     if (!result.success) {
       return Response.json(
@@ -72,7 +75,9 @@ export async function PUT(
       message: `Data warga "${result.user.nama}" berhasil diperbarui.`,
       user: result.user,
     });
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("Update user API error:", error);
     return Response.json(
       { success: false, error: "Terjadi kesalahan server." },
       { status: 500 }
@@ -94,7 +99,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const result = deleteUser(id);
+    const result = await deleteUser(id);
 
     if (!result.success) {
       return Response.json(
@@ -107,7 +112,9 @@ export async function DELETE(
       success: true,
       message: "Data warga berhasil dihapus dari sistem.",
     });
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("Delete user API error:", error);
     return Response.json(
       { success: false, error: "Terjadi kesalahan server." },
       { status: 500 }

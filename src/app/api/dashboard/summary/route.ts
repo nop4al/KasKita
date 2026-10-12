@@ -8,6 +8,7 @@
  * Requires authentication via cookie.
  */
 
+import { unstable_rethrow } from "next/navigation";
 import { getSessionFromCookie } from "@/lib/auth";
 import {
   getAdminDashboardSummary,
@@ -26,7 +27,7 @@ export async function GET() {
     }
 
     if (session.role === "admin") {
-      const summary = getAdminDashboardSummary();
+      const summary = await getAdminDashboardSummary();
       return Response.json({
         success: true,
         role: "admin",
@@ -35,13 +36,15 @@ export async function GET() {
     }
 
     // Warga
-    const summary = getWargaDashboardSummary(session.userId);
+    const summary = await getWargaDashboardSummary(session.userId);
     return Response.json({
       success: true,
       role: "warga",
       data: summary,
     });
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("Dashboard summary API error:", error);
     return Response.json(
       { success: false, error: "Terjadi kesalahan server." },
       { status: 500 }

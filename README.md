@@ -56,6 +56,41 @@
    - Panel Pengurus: `http://localhost:3000/dashboard/admin`
    - Portal Warga: `http://localhost:3000/dashboard/warga`
 
+## 🗄️ Konfigurasi Supabase
+
+KasKita memakai Supabase Auth untuk akun dan sesi, serta PostgreSQL untuk profil,
+transaksi kas, dan tagihan iuran.
+
+1. Buat project di [Supabase](https://supabase.com/) dan salin URL project, anon
+   key, dan service-role key dari **Project Settings → API Keys**.
+2. Salin `.env.example` menjadi `.env.local`, lalu isi nilainya. Jangan pernah
+   menambahkan service-role key dengan awalan `NEXT_PUBLIC_` atau memasukkannya
+   ke Git.
+3. Jalankan `supabase/migrations/20261012000000_initial_schema.sql` pada SQL
+   Editor project Supabase.
+4. Jalankan aplikasi dan daftarkan akun pertama melalui `/register`. Pastikan
+   email dikonfirmasi jika konfirmasi email Supabase aktif. Kemudian jalankan
+   SQL berikut dengan email yang sama persis seperti saat mendaftar:
+
+   ```sql
+   update public.profiles
+   set role = 'admin', status = 'active'
+   where email = 'email-admin-anda@example.com';
+   ```
+
+   Ganti `email-admin-anda@example.com` dengan email akun Anda. SQL Editor harus
+   melaporkan `UPDATE 1`; jika `UPDATE 0`, akun belum terdaftar di project ini
+   atau emailnya tidak cocok, jadi akun belum bisa login.
+
+5. Pendaftaran mandiri warga lain akan berstatus pending; admin dapat menyetujui
+   akun mereka dari halaman kelola warga.
+
+Migrasi mengaktifkan Row Level Security: warga hanya dapat membaca profil dan
+riwayat iurannya sendiri, sedangkan transaksi kas dapat dibaca akun aktif.
+Operasi administratif menggunakan `SUPABASE_SERVICE_ROLE_KEY` hanya di server.
+Pengaturan awal iuran bulanan adalah Rp50.000 (kebersihan Rp25.000 dan keamanan
+Rp25.000, jatuh tempo tanggal 10); sesuaikan baris `app_settings` bila diperlukan.
+
 ---
 
 ## 📦 Build Produksi

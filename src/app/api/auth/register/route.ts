@@ -8,6 +8,7 @@
  */
 
 import { type NextRequest } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import { registerUser, getSessionFromCookie } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
     const session = await getSessionFromCookie();
     const registeredByAdmin = session?.role === "admin";
 
-    const result = registerUser({
+    const result = await registerUser({
       nama,
       email,
       password,
@@ -64,7 +65,9 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("Register API error:", error);
     return Response.json(
       { success: false, error: "Terjadi kesalahan server." },
       { status: 500 }

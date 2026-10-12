@@ -5,6 +5,7 @@
  * Used to populate the warga management table.
  */
 
+import { unstable_rethrow } from "next/navigation";
 import { getSessionFromCookie, getAllUsers } from "@/lib/auth";
 
 export async function GET() {
@@ -25,13 +26,15 @@ export async function GET() {
       );
     }
 
-    const users = getAllUsers();
+    const users = await getAllUsers();
     return Response.json({
       success: true,
       data: users,
       total: users.length,
     });
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("List users API error:", error);
     return Response.json(
       { success: false, error: "Terjadi kesalahan server." },
       { status: 500 }
@@ -68,7 +71,7 @@ export async function POST(request: Request) {
     }
 
     const { registerUser } = await import("@/lib/auth");
-    const result = registerUser({
+    const result = await registerUser({
       nama,
       email,
       password,
@@ -91,7 +94,9 @@ export async function POST(request: Request) {
       message: `Warga "${result.user.nama}" berhasil didaftarkan dengan status aktif.`,
       user: result.user,
     });
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("Create user API error:", error);
     return Response.json(
       { success: false, error: "Terjadi kesalahan server." },
       { status: 500 }

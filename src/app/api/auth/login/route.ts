@@ -5,7 +5,8 @@
  * Returns: { success, user, token } or { success: false, error }
  */
 
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import { loginUser } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = loginUser(email, password);
+    const result = await loginUser(email, password);
 
     if (!result.success) {
       return Response.json(
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const res = NextResponse.json(
+    return Response.json(
       {
         success: true,
         user: result.user,
@@ -37,20 +38,11 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 }
     );
-
-    res.cookies.set("kaskita_session", result.token, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
-    });
-
-    return res;
   } catch (err) {
+    unstable_rethrow(err);
     console.error("Login API error:", err);
-    const msg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json(
-      { success: false, error: "Terjadi kesalahan server: " + msg },
+    return Response.json(
+      { success: false, error: "Terjadi kesalahan server." },
       { status: 500 }
     );
   }

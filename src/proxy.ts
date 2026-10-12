@@ -1,53 +1,88 @@
-/**
- * proxy.ts — Next.js 16 Proxy (replaces middleware.ts)
- *
- * Role-based route protection:
- * - /dashboard/admin/* → Only accessible by users with role "admin"
- * - /dashboard/warga/* → Only accessible by users with role "warga"
- * - /api/* → Pass through (API routes handle their own auth)
- *
- * NOTE: Since proxy runs on the edge and can't access the in-memory
- * session store directly, we encode basic role info into the cookie.
- * For the demo, we check the cookie existence for dashboard routes
- * and let the API routes handle detailed auth checks.
- */
-
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import type { Database } from "@/lib/supabase/database.types";
 
-export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const sessionCookie = request.cookies.get("kaskita_session")?.value;
+export async function proxy(request: NextRequest) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Allow API routes, static files, and public pages to pass through
-  if (
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/_next") ||
-    pathname === "/" ||
-    pathname === "/login" ||
-    pathname === "/register" ||
-    pathname.startsWith("/favicon")
-  ) {
-    return NextResponse.next();
+  if (!url || !anonKey) {
+    console.error("Supabase proxy is missing public environment configuration.");
+    return Response.json(
+      { error: "Aplikasi belum dikonfigurasi untuk Supabase." },
+      { status: 503 }
+    );
   }
 
-  // Dashboard routes require a session cookie
-  if (pathname.startsWith("/dashboard")) {
-    if (!sessionCookie) {
-      // Redirect to login if not authenticated
+  let response = NextResponse.next({ request });
+  const supabase = createServerClient<Database>(url, anonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        for (const { name, value } of cookiesToSet) {
+          request.cookies.set(name, value);
+        }
+
+        response = NextResponse.next({ request });
+        for (const { name, value, options } of cookiesToSet) {
+          response.cookies.set(name, value, options);
+        }
+      },
+    },
+  });
+
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error && error.name !== "AuthSessionMissingError") throw error;
+
+    const { pathname } = request.nextUrl;
+    if (!user) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       loginUrl.searchParams.set("pesan", "Silakan login terlebih dahulu.");
       return NextResponse.redirect(loginUrl);
     }
-  }
 
-  return NextResponse.next();
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role,status")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profileError) throw profileError;
+
+    if (!profile || profile.status !== "active") {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("pesan", "Akun belum aktif atau tidak ditemukan.");
+      return NextResponse.redirect(loginUrl);
+    }
+
+    const requiredRole = pathname.startsWith("/dashboard/admin")
+      ? "admin"
+      : pathname.startsWith("/dashboard/warga")
+        ? "warga"
+        : null;
+    if (requiredRole && profile.role !== requiredRole) {
+      return NextResponse.redirect(
+        new URL(
+          profile.role === "admin" ? "/dashboard/admin" : "/dashboard/warga",
+          request.url
+        )
+      );
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Supabase proxy authentication error:", error);
+    return Response.json(
+      { error: "Tidak dapat memvalidasi sesi Supabase." },
+      { status: 503 }
+    );
+  }
 }
 
 export const config = {
-  matcher: [
-    // Match all dashboard routes and skip static/API paths
-    "/dashboard/:path*",
-  ],
+  matcher: ["/dashboard/:path*"],
 };

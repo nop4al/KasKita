@@ -5,6 +5,7 @@
  */
 
 import { type NextRequest } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import { getSessionFromCookie, approveUser, getUserById } from "@/lib/auth";
 
 export async function PATCH(
@@ -29,7 +30,7 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const approved = approveUser(id);
+    const approved = await approveUser(id);
 
     if (!approved) {
       return Response.json(
@@ -41,13 +42,15 @@ export async function PATCH(
       );
     }
 
-    const user = getUserById(id);
+    const user = await getUserById(id);
     return Response.json({
       success: true,
       message: `Akun warga "${user?.nama}" berhasil disetujui dan sekarang aktif.`,
       user,
     });
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("Approve user API error:", error);
     return Response.json(
       { success: false, error: "Terjadi kesalahan server." },
       { status: 500 }

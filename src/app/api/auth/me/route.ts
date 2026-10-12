@@ -5,6 +5,7 @@
  * Used by the frontend to check login status and role.
  */
 
+import { unstable_rethrow } from "next/navigation";
 import { getSessionFromCookie } from "@/lib/auth";
 
 export async function GET() {
@@ -25,7 +26,9 @@ export async function GET() {
       },
       { status: 200 }
     );
-  } catch {
+  } catch (error) {
+    unstable_rethrow(error);
+    console.error("Auth session API error:", error);
     return Response.json(
       { authenticated: false, user: null, error: "Terjadi kesalahan server." },
       { status: 500 }

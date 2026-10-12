@@ -12,11 +12,9 @@ import {
   ArrowUpRight,
   Download,
   BookOpen,
-  Send,
   Users,
   CheckCircle2,
   Clock,
-  Sparkles,
   MessageCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -31,16 +29,57 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import type { DashboardSummary } from "@/lib/dashboard-data";
 import { mockStats, mockTransaksi } from "@/lib/mock-data";
 
 export default function AdminDashboardPage() {
+  const [summary, setSummary] = React.useState<DashboardSummary | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function loadSummary() {
+      try {
+        const response = await fetch("/api/dashboard/summary");
+        const result = await response.json() as {
+          success?: boolean;
+          data?: DashboardSummary;
+          error?: string;
+        };
+        if (!response.ok || !result.success || !result.data) {
+          throw new Error(result.error || "Gagal memuat ringkasan kas.");
+        }
+        if (!cancelled) setSummary(result.data);
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(error instanceof Error ? error.message : "Gagal memuat ringkasan kas.");
+        }
+      }
+    }
+
+    void loadSummary();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleQuickAction = (actionName: string) => {
     toast.info(`Membuka form "${actionName}" (fitur pencatatan siap dihubungkan).`);
   };
 
   const handleBroadcastReminder = () => {
-    toast.success("Draf pengingat WhatsApp santun untuk 16 warga telah siap dikirim!");
+    toast.success("Draf pengingat WhatsApp santun telah siap dikirim!");
   };
+  const totalSaldo = summary?.totalSaldo ?? mockStats.totalSaldo;
+  const pemasukanBulanIni = summary?.pemasukanBulanIni ?? mockStats.pemasukanBulanIni;
+  const pengeluaranBulanIni = summary?.pengeluaranBulanIni ?? mockStats.pengeluaranBulanIni;
+  const transaksi = summary?.transaksi ?? mockTransaksi;
+  const totalWargaAktif = summary?.totalWargaAktif ?? 64;
+  const iuranLunas = summary?.iuranLunas ?? 48;
+  const iuranBelumLunas = summary?.iuranBelumLunas ?? 16;
+  const persenLunas = totalWargaAktif > 0
+    ? Math.round((iuranLunas / totalWargaAktif) * 100)
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -78,17 +117,17 @@ export default function AdminDashboardPage() {
         <StatCard
           badgeText="SISA KAS SAAT INI"
           title="Total Uang Kas RT"
-          value={mockStats.totalSaldo}
+          value={totalSaldo}
           icon={Wallet}
           variant="emerald"
           description="Uang kas aman di rekening & kas tunai bendahara"
           subLabel="Iuran Warga Masuk"
-          subValue="48 dari 64 Rumah (75%)"
+          subValue={`${iuranLunas} dari ${totalWargaAktif} Rumah (${persenLunas}%)`}
         />
         <StatCard
           badgeText="MASUK BULAN INI"
           title="Uang Kas Masuk"
-          value={mockStats.pemasukanBulanIni}
+          value={pemasukanBulanIni}
           icon={TrendingUp}
           variant="emerald"
           description="Dari iuran sampah, keamanan, dan sumbangan warga"
@@ -98,7 +137,7 @@ export default function AdminDashboardPage() {
         <StatCard
           badgeText="KELUAR BULAN INI"
           title="Uang Kas Keluar"
-          value={mockStats.pengeluaranBulanIni}
+          value={pengeluaranBulanIni}
           icon={TrendingDown}
           variant="rose"
           description="Beli lampu jalan, konsumsi kerja bakti, & kebersihan"
@@ -111,7 +150,7 @@ export default function AdminDashboardPage() {
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Kolom Kiri: Catatan Kas Terbaru */}
         <div id="transaksi" className="lg:col-span-2 scroll-mt-20">
-          <RecentTransactions transactions={mockTransaksi} limit={5} />
+          <RecentTransactions transactions={transaksi} limit={5} />
         </div>
 
         {/* Kolom Kanan: Aksi Cepat Pengurus & Status Tagihan */}
@@ -190,21 +229,21 @@ export default function AdminDashboardPage() {
                 <span>Iuran Warga Bulan Ini</span>
               </span>
               <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                48 dari 64 Rumah
+                {iuranLunas} dari {totalWargaAktif} Rumah
               </span>
             </div>
 
             <div className="space-y-1.5">
               <div className="h-3 w-full rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden flex">
-                <div className="h-full bg-emerald-500" style={{ width: "75%" }} />
-                <div className="h-full bg-rose-400" style={{ width: "25%" }} />
+                <div className="h-full bg-emerald-500" style={{ width: `${persenLunas}%` }} />
+                <div className="h-full bg-rose-400" style={{ width: `${100 - persenLunas}%` }} />
               </div>
               <div className="flex justify-between text-xs font-semibold text-slate-600 dark:text-zinc-400">
                 <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> 48 Rumah Lunas (75%)
+                  <CheckCircle2 className="h-3.5 w-3.5" /> {iuranLunas} Rumah Lunas ({persenLunas}%)
                 </span>
                 <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
-                  <Clock className="h-3.5 w-3.5" /> 16 Belum Bayar
+                  <Clock className="h-3.5 w-3.5" /> {iuranBelumLunas} Belum Bayar
                 </span>
               </div>
             </div>
@@ -214,11 +253,12 @@ export default function AdminDashboardPage() {
               className="w-full text-xs h-10 rounded-xl gap-2 font-bold bg-[#25D366] hover:bg-[#20ba59] text-white shadow-xs"
             >
               <MessageCircle className="h-4 w-4" />
-              <span>Ingatkan 16 Warga Lewat WhatsApp</span>
+              <span>Ingatkan {iuranBelumLunas} Warga Lewat WhatsApp</span>
             </Button>
           </Card>
         </div>
       </section>
+
     </div>
   );
 }
