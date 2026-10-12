@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import Link from "next/link";
 import {
@@ -34,12 +35,15 @@ import { Button } from "@/components/ui/button";
 import { mockStats, mockTransaksi } from "@/lib/mock-data";
 
 export default function AdminDashboardPage() {
+  const router =  useRouter();
   const handleQuickAction = (actionName: string) => {
     toast.info(`Membuka form "${actionName}" (fitur pencatatan siap dihubungkan).`);
   };
 
   const handleBroadcastReminder = () => {
     toast.success("Draf pengingat WhatsApp santun untuk 16 warga telah siap dikirim!");
+
+  
   };
 
   return (
@@ -165,9 +169,11 @@ export default function AdminDashboardPage() {
                 </span>
               </Button>
 
-              <Link
+         <Link
                 href="/dashboard/admin/warga"
                 className="w-full flex items-center justify-between h-11 px-4 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-bold hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors text-slate-800 dark:text-zinc-200"
+
+             
               >
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-200 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 font-bold">

@@ -70,23 +70,24 @@ export function DashboardSidebar() {
       active: pathname === "/dashboard/admin",
     },
     {
-      title: "Data Warga (KK)",
-      url: "/dashboard/admin/warga",
+     title: "Data Warga (KK)",
+      url: "/dashboard/data-warga",
       icon: Users,
       badge: totalWarga !== null ? `${totalWarga} KK` : "...",
-      active: pathname === "/dashboard/admin/warga",
+      active: pathname === "/dashboard/data-warga",
+
     },
     {
       title: "Catat Uang Kas",
-      url: "/dashboard/admin#transaksi",
+      url: "/dashboard/catat-kas",
       icon: ArrowLeftRight,
-      active: false,
+      active: pathname === "/dashboard/catat-kas",
     },
     {
       title: "Laporan Keuangan",
-      url: "/dashboard/admin#laporan",
+      url: "/dashboard/laporan-keuangan",
       icon: FileText,
-      active: false,
+      active: pathname === "/dashboard/laporan-keuangan",
     },
     {
       title: "Pengaturan Kas",
@@ -105,15 +106,15 @@ export function DashboardSidebar() {
     },
     {
       title: "Riwayat Pembayaran",
-      url: "/dashboard/warga#riwayat",
+      url: "/dashboard/warga/riwayat",
       icon: History,
-      active: false,
+      active: pathname === "/dashboard/warga/riwayat",
     },
     {
       title: "Transparansi Kas RT",
-      url: "/dashboard/warga#laporan",
+      url: "/dashboard/warga/transparansi",
       icon: FileText,
-      active: false,
+      active: pathname === "/dashboardd/warga/trasnparansi",
     },
   ];
 
