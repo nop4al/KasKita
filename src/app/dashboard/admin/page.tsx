@@ -76,9 +76,13 @@ export default function AdminDashboardPage() {
   const transaksi = summary?.transaksi ?? mockTransaksi;
   const totalWargaAktif = summary?.totalWargaAktif ?? 64;
   const iuranLunas = summary?.iuranLunas ?? 48;
+  const iuranMenungguVerifikasi = summary?.iuranMenungguVerifikasi ?? 0;
   const iuranBelumLunas = summary?.iuranBelumLunas ?? 16;
   const persenLunas = totalWargaAktif > 0
     ? Math.round((iuranLunas / totalWargaAktif) * 100)
+    : 0;
+  const persenMenungguVerifikasi = totalWargaAktif > 0
+    ? Math.round((iuranMenungguVerifikasi / totalWargaAktif) * 100)
     : 0;
 
   return (
@@ -236,7 +240,11 @@ export default function AdminDashboardPage() {
             <div className="space-y-1.5">
               <div className="h-3 w-full rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden flex">
                 <div className="h-full bg-emerald-500" style={{ width: `${persenLunas}%` }} />
-                <div className="h-full bg-rose-400" style={{ width: `${100 - persenLunas}%` }} />
+                <div className="h-full bg-amber-400" style={{ width: `${persenMenungguVerifikasi}%` }} />
+                <div
+                  className="h-full bg-rose-400"
+                  style={{ width: `${Math.max(100 - persenLunas - persenMenungguVerifikasi, 0)}%` }}
+                />
               </div>
               <div className="flex justify-between text-xs font-semibold text-slate-600 dark:text-zinc-400">
                 <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
@@ -247,6 +255,14 @@ export default function AdminDashboardPage() {
                 </span>
               </div>
             </div>
+
+            <Link
+              href="/dashboard/admin/iuran"
+              className="flex w-full items-center justify-between rounded-xl border border-amber-200 px-3 py-2.5 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-50 dark:border-amber-900 dark:text-amber-300 dark:hover:bg-amber-950/40"
+            >
+              <span>{iuranMenungguVerifikasi} pembayaran menunggu verifikasi</span>
+              <span>Kelola iuran →</span>
+            </Link>
 
             <Button
               onClick={handleBroadcastReminder}

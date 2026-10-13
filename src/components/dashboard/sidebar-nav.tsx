@@ -15,7 +15,6 @@ import {
   Landmark,
   Receipt,
   Wallet,
-  Building2,
   Home,
 } from "lucide-react";
 import {
@@ -27,7 +26,6 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
@@ -68,6 +66,12 @@ export function DashboardSidebar() {
       url: "/dashboard/admin",
       icon: LayoutDashboard,
       active: pathname === "/dashboard/admin",
+    },
+    {
+      title: "Kelola Iuran",
+      url: "/dashboard/admin/iuran",
+      icon: Receipt,
+      active: pathname.startsWith("/dashboard/admin/iuran"),
     },
     {
      title: "Data Warga (KK)",

@@ -12,7 +12,6 @@ import {
   ArrowRight,
   Menu,
   X,
-  Home,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -27,12 +26,12 @@ import {
 
 export function HomeNavbar() {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md">
@@ -94,7 +93,7 @@ export function HomeNavbar() {
               <span>Masuk Aplikasi</span>
               <ArrowRight className="h-4 w-4" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-60 p-2">
+            <DropdownMenuContent className="w-60 p-2">
               <DropdownMenuLabel className="text-xs font-bold px-2 py-1 text-slate-500">
                 Pilih Akun Masuk
               </DropdownMenuLabel>
