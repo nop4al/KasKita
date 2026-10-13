@@ -12,6 +12,7 @@ export type Database = {
           no_hp: string | null;
           blok: string | null;
           created_at: string;
+          updated_at: string | null;
         };
         Insert: {
           id: string;
@@ -23,6 +24,7 @@ export type Database = {
           no_hp?: string | null;
           blok?: string | null;
           created_at?: string;
+          updated_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
         Relationships: [];
@@ -39,6 +41,9 @@ export type Database = {
           person_in_charge: string;
           created_by: string | null;
           created_at: string;
+          due_id: string | null;
+          source_type: "manual" | "dues";
+          updated_at: string | null;
         };
         Insert: {
           id?: string;
@@ -51,6 +56,9 @@ export type Database = {
           person_in_charge: string;
           created_by?: string | null;
           created_at?: string;
+          due_id?: string | null;
+          source_type?: "manual" | "dues";
+          updated_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["ledger_transactions"]["Insert"]>;
         Relationships: [];
@@ -64,11 +72,16 @@ export type Database = {
           amount: number;
           cleaning_fee: number;
           security_fee: number;
-          status: "pending" | "paid";
+          status: "pending" | "awaiting_verification" | "paid";
           receipt_number: string | null;
           payment_method: string | null;
           paid_at: string | null;
           created_at: string;
+          updated_at: string | null;
+          source_transaction_id: string | null;
+          idempotency_key: string | null;
+          payment_reference: string | null;
+          payment_submitted_at: string | null;
         };
         Insert: {
           id?: string;
@@ -78,11 +91,16 @@ export type Database = {
           amount: number;
           cleaning_fee: number;
           security_fee: number;
-          status?: "pending" | "paid";
+          status?: "pending" | "awaiting_verification" | "paid";
           receipt_number?: string | null;
           payment_method?: string | null;
           paid_at?: string | null;
           created_at?: string;
+          updated_at?: string | null;
+          source_transaction_id?: string | null;
+          idempotency_key?: string | null;
+          payment_reference?: string | null;
+          payment_submitted_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["dues"]["Insert"]>;
         Relationships: [];
@@ -120,7 +138,47 @@ export type Database = {
         Relationships: [];
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      generate_due_invoices: {
+        Args: {
+          target_period?: string | null;
+          target_user_id?: string | null;
+          force_refresh?: boolean;
+        };
+        Returns: {
+          generated_count: number;
+          updated_count: number;
+          skipped_count: number;
+        }[];
+      };
+      pay_due_invoice: {
+        Args: {
+          due_id_param: string;
+          payment_method: string;
+          payment_reference?: string | null;
+          idempotency_key?: string | null;
+          paid_by_user_id?: string | null;
+        };
+        Returns: {
+          due_id: string;
+          status: string;
+          receipt_number: string;
+          transaction_id: string;
+        }[];
+      };
+      request_due_payment: {
+        Args: {
+          due_id_param: string;
+          payment_method_param: string;
+          payment_reference_param?: string | null;
+        };
+        Returns: {
+          due_id: string;
+          status: string;
+          payment_submitted_at: string;
+        }[];
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

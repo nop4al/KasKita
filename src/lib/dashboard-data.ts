@@ -22,7 +22,7 @@ export interface RiwayatIuranItem {
   tanggalBayar: string;
   nominal: number;
   metode: string;
-  status: "Lunas" | "Belum Lunas";
+  status: "Lunas" | "Menunggu Verifikasi" | "Belum Lunas";
 }
 
 export interface DashboardSummary {
@@ -33,6 +33,7 @@ export interface DashboardSummary {
   wargaAktif: number;
   wargaPending: number;
   iuranLunas: number;
+  iuranMenungguVerifikasi: number;
   iuranBelumLunas: number;
   totalWargaAktif: number;
   bulan: string;
@@ -42,7 +43,7 @@ export interface DashboardSummary {
 
 export interface WargaDashboardSummary {
   totalSaldoKasRT: number;
-  statusIuranBulanIni: "Lunas" | "Belum Lunas";
+  statusIuranBulanIni: "Lunas" | "Menunggu Verifikasi" | "Belum Lunas";
   bulanIni: string;
   tahun: string;
   nominalIuran: number;
@@ -50,11 +51,15 @@ export interface WargaDashboardSummary {
   iuranWarga: {
     bulan: string;
     tahun: string;
-    status: "Lunas" | "Belum Lunas";
+    status: "Lunas" | "Menunggu Verifikasi" | "Belum Lunas";
+    dueId: string | null;
     jatuhTempo: string;
     nominal: number;
     rincian: { kebersihan: number; keamanan: number };
     nomorBukti: string;
+    metodePembayaran: string | null;
+    referensiPembayaran: string | null;
+    diajukanPada: string | null;
     warga: {
       nama: string;
       noRumah: string;
@@ -100,7 +105,11 @@ function mapDue(row: DueRow): RiwayatIuranItem {
     tanggalBayar: row.paid_at?.slice(0, 10) ?? "",
     nominal: row.amount,
     metode: row.payment_method ?? "-",
-    status: row.status === "paid" ? "Lunas" : "Belum Lunas",
+    status: row.status === "paid"
+      ? "Lunas"
+      : row.status === "awaiting_verification"
+        ? "Menunggu Verifikasi"
+        : "Belum Lunas",
   };
 }
 
@@ -127,6 +136,7 @@ export async function getAdminDashboardSummary(): Promise<DashboardSummary> {
   const profiles = profilesResult.data;
   const activeCount = profiles.filter((profile) => profile.status === "active").length;
   const paidCount = duesResult.data.filter((due) => due.status === "paid").length;
+  const waitingCount = duesResult.data.filter((due) => due.status === "awaiting_verification").length;
   const now = new Date();
   return {
     totalSaldo: totalsResult.data.balance,
@@ -136,7 +146,8 @@ export async function getAdminDashboardSummary(): Promise<DashboardSummary> {
     wargaAktif: activeCount,
     wargaPending: profiles.length - activeCount,
     iuranLunas: paidCount,
-    iuranBelumLunas: Math.max(activeCount - paidCount, 0),
+    iuranMenungguVerifikasi: waitingCount,
+    iuranBelumLunas: Math.max(activeCount - paidCount - waitingCount, 0),
     totalWargaAktif: activeCount,
     bulan: now.toLocaleDateString("id-ID", { month: "long" }),
     tahun: String(now.getFullYear()),
@@ -185,10 +196,15 @@ export async function getWargaDashboardSummary(
     dueDateFor(year, month, settings.due_day);
   const history = duesResult.data.map(mapDue);
   const paidHistory = history.find((item) => item.status === "Lunas") ?? null;
+  const currentStatus = currentDue?.status === "paid"
+    ? "Lunas"
+    : currentDue?.status === "awaiting_verification"
+      ? "Menunggu Verifikasi"
+      : "Belum Lunas";
 
   return {
     totalSaldoKasRT: totalsResult.data.balance,
-    statusIuranBulanIni: currentDue?.status === "paid" ? "Lunas" : "Belum Lunas",
+    statusIuranBulanIni: currentStatus,
     bulanIni: monthLabel,
     tahun: String(year),
     nominalIuran: currentDue?.amount ?? settings.monthly_dues,
@@ -196,7 +212,8 @@ export async function getWargaDashboardSummary(
     iuranWarga: {
       bulan: monthLabel,
       tahun: String(year),
-      status: currentDue?.status === "paid" ? "Lunas" : "Belum Lunas",
+      status: currentStatus,
+      dueId: currentDue?.id ?? null,
       jatuhTempo: dueDate,
       nominal: currentDue?.amount ?? settings.monthly_dues,
       rincian: {
@@ -204,6 +221,9 @@ export async function getWargaDashboardSummary(
         keamanan: currentDue?.security_fee ?? settings.security_fee,
       },
       nomorBukti: currentDue?.receipt_number ?? "",
+      metodePembayaran: currentDue?.payment_method ?? null,
+      referensiPembayaran: currentDue?.payment_reference ?? null,
+      diajukanPada: currentDue?.payment_submitted_at ?? null,
       warga: {
         nama: profileResult.data.nama,
         noRumah: profileResult.data.no_rumah ?? "-",

@@ -7,8 +7,8 @@ import {
   Wallet,
   CheckCircle2,
   Calendar,
+  Clock,
   QrCode,
-  Sparkles,
   Receipt,
   FileCheck,
   Printer,
@@ -43,7 +43,9 @@ import type { WargaDashboardSummary } from "@/lib/dashboard-data";
 
 export default function WargaDashboardPage() {
   const [summary, setSummary] = React.useState<WargaDashboardSummary | null>(null);
-  const [simulatedStatus, setSimulatedStatus] = React.useState<"Lunas" | "Belum Lunas" | null>(null);
+  const [paymentMethod, setPaymentMethod] = React.useState("cash");
+  const [paymentReference, setPaymentReference] = React.useState("");
+  const [submittingPayment, setSubmittingPayment] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -75,7 +77,8 @@ export default function WargaDashboardPage() {
 
   const invoice = summary?.iuranWarga ?? mockIuranWarga;
   const riwayatIuran = summary?.riwayatIuran ?? mockRiwayatIuran;
-  const isLunas = simulatedStatus ?? invoice.status;
+  const isLunas = invoice.status === "Lunas";
+  const isAwaitingVerification = invoice.status === "Menunggu Verifikasi";
   let formattedJatuhTempo = invoice.jatuhTempo;
   try {
     formattedJatuhTempo = format(parseISO(invoice.jatuhTempo), "d MMMM yyyy", {
@@ -85,18 +88,43 @@ export default function WargaDashboardPage() {
     // Keep the ISO date if it cannot be formatted.
   }
 
-  const handleBayar = () => {
-    toast.success("Membuka instruksi pembayaran QRIS KasKita RT 04.");
-  };
-
   const handleCetak = () => {
     toast.info("Mengunduh slip kwitansi resmi iuran warga (PDF).");
   };
 
-  const toggleSimulasiStatus = () => {
-    const nextStatus = isLunas ? "Belum Lunas" : "Lunas";
-    setSimulatedStatus(nextStatus);
-    toast.info(`Simulasi status diubah: ${nextStatus}`);
+  const handleAjukanPembayaran = async () => {
+    const dueId = summary?.iuranWarga.dueId;
+    if (!dueId) {
+      toast.error("Tagihan periode ini belum diterbitkan pengurus.");
+      return;
+    }
+
+    setSubmittingPayment(true);
+    try {
+      const response = await fetch(`/api/dues/${dueId}/pay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentMethod, paymentReference }),
+      });
+      const result = await response.json() as { success?: boolean; error?: string };
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Gagal mengajukan pembayaran.");
+      }
+
+      toast.success("Pengajuan terkirim. Status akan lunas setelah diverifikasi pengurus.");
+      const summaryResponse = await fetch("/api/dashboard/summary");
+      const summaryResult = await summaryResponse.json() as {
+        success?: boolean;
+        data?: WargaDashboardSummary;
+      };
+      if (summaryResponse.ok && summaryResult.success && summaryResult.data) {
+        setSummary(summaryResult.data);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal mengajukan pembayaran.");
+    } finally {
+      setSubmittingPayment(false);
+    }
   };
 
   return (
@@ -118,15 +146,6 @@ export default function WargaDashboardPage() {
               <Printer className="h-4 w-4" />
               <span>Cetak Kwitansi</span>
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleSimulasiStatus}
-              className="text-xs h-9.5 rounded-xl gap-1.5 border-dashed font-semibold"
-            >
-              <Sparkles className="h-4 w-4 text-amber-500" />
-              <span>Simulasi: {isLunas ? "Belum Bayar" : "Sudah Lunas"}</span>
-            </Button>
           </>
         }
       />
@@ -136,7 +155,9 @@ export default function WargaDashboardPage() {
         className={`rounded-2xl border transition-all duration-150 overflow-hidden shadow-sm ${
           isLunas
             ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/20"
-            : "border-amber-300 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/20"
+            : isAwaitingVerification
+              ? "border-blue-300 dark:border-blue-800 bg-blue-50/40 dark:bg-blue-950/20"
+              : "border-amber-300 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/20"
         }`}
       >
         <div className="bg-white/80 dark:bg-zinc-900/80 p-5 sm:p-6 border-b border-slate-200/80 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -230,6 +251,21 @@ export default function WargaDashboardPage() {
                     </p>
                   </div>
                 </div>
+              ) : isAwaitingVerification ? (
+                <div className="space-y-2 py-2">
+                  <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 mb-1">
+                    <Clock className="h-9 w-9" />
+                  </div>
+                  <h4 className="text-xl font-black text-blue-700 dark:text-blue-300 uppercase tracking-tight">
+                    MENUNGGU VERIFIKASI
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400">
+                    Pengajuan {summary?.iuranWarga.metodePembayaran || "pembayaran"} Anda sudah diterima pengurus.
+                    {summary?.iuranWarga.referensiPembayaran
+                      ? ` Referensi: ${summary.iuranWarga.referensiPembayaran}.`
+                      : ""}
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-3 w-full py-1">
                   <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 space-y-1">
@@ -244,13 +280,44 @@ export default function WargaDashboardPage() {
                     </span>
                   </div>
 
-                  <Button
-                    onClick={handleBayar}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 rounded-xl shadow-xs gap-2 text-xs uppercase tracking-wider"
-                  >
-                    <QrCode className="h-4 w-4" />
-                    <span>Bayar Sekarang (QRIS / Tunai)</span>
-                  </Button>
+                  {summary?.iuranWarga.dueId ? (
+                    <>
+                      <label className="block text-left text-xs font-semibold text-slate-600 dark:text-zinc-300">
+                        Metode pembayaran
+                        <select
+                          value={paymentMethod}
+                          onChange={(event) => setPaymentMethod(event.target.value)}
+                          className="mt-1.5 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                        >
+                          <option value="cash">Tunai</option>
+                          <option value="bank_transfer">Transfer bank</option>
+                          <option value="qris">QRIS</option>
+                        </select>
+                      </label>
+                      <label className="block text-left text-xs font-semibold text-slate-600 dark:text-zinc-300">
+                        Referensi pembayaran (opsional)
+                        <input
+                          value={paymentReference}
+                          onChange={(event) => setPaymentReference(event.target.value)}
+                          maxLength={120}
+                          className="mt-1.5 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                          placeholder="Contoh: nomor bukti transfer"
+                        />
+                      </label>
+                      <Button
+                        onClick={handleAjukanPembayaran}
+                        disabled={submittingPayment}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 rounded-xl shadow-xs gap-2 text-xs uppercase tracking-wider"
+                      >
+                        <QrCode className="h-4 w-4" />
+                        <span>{submittingPayment ? "Mengirim pengajuan..." : "Ajukan Pembayaran"}</span>
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-xs text-slate-500 dark:text-zinc-400">
+                      Tagihan periode ini belum diterbitkan pengurus.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -356,7 +423,13 @@ export default function WargaDashboardPage() {
                       {formatRupiah(item.nominal)}
                     </TableCell>
                     <TableCell className="text-right pr-6">
-                      <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 text-[11px] font-bold">
+                      <Badge className={`text-[11px] font-bold ${
+                        item.status === "Lunas"
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800"
+                          : item.status === "Menunggu Verifikasi"
+                            ? "bg-blue-50 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800"
+                            : "bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800"
+                      }`}>
                         ✓ {item.status}
                       </Badge>
                     </TableCell>

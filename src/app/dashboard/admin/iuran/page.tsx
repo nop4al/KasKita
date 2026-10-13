@@ -30,6 +30,7 @@ type PaymentRequest = {
   } | null;
 };
 
+<<<<<<< HEAD
 type UnpaidDue = {
   id: string;
   user_id: string;
@@ -37,6 +38,8 @@ type UnpaidDue = {
   resident: PaymentRequest["resident"];
 };
 
+=======
+>>>>>>> e3b245bd40389fcb388fa69dac567f5617ff8cf6
 type ApiResponse<T> = {
   success?: boolean;
   data?: T;
@@ -46,11 +49,15 @@ type ApiResponse<T> = {
 export default function AdminIuranPage() {
   const [period, setPeriod] = React.useState(() => new Date().toISOString().slice(0, 7));
   const [requests, setRequests] = React.useState<PaymentRequest[]>([]);
+<<<<<<< HEAD
   const [unpaidDues, setUnpaidDues] = React.useState<UnpaidDue[]>([]);
+=======
+>>>>>>> e3b245bd40389fcb388fa69dac567f5617ff8cf6
   const [loading, setLoading] = React.useState(true);
   const [generating, setGenerating] = React.useState(false);
   const [verifyingId, setVerifyingId] = React.useState<string | null>(null);
 
+<<<<<<< HEAD
   const loadDues = React.useCallback(async (signal?: AbortSignal) => {
     try {
       const requestsParams = new URLSearchParams({ period, status: "awaiting_verification" });
@@ -76,6 +83,23 @@ export default function AdminIuranPage() {
     } catch (error) {
       if (!signal?.aborted) {
         toast.error(error instanceof Error ? error.message : "Gagal memuat data iuran.");
+=======
+  const loadRequests = React.useCallback(async (signal?: AbortSignal) => {
+    try {
+      const params = new URLSearchParams({
+        period,
+        status: "awaiting_verification",
+      });
+      const response = await fetch(`/api/dues?${params}`, { signal });
+      const result = await response.json() as ApiResponse<PaymentRequest[]>;
+      if (!response.ok || !result.success || !result.data) {
+        throw new Error(result.error || "Gagal memuat pengajuan pembayaran.");
+      }
+      if (!signal?.aborted) setRequests(result.data);
+    } catch (error) {
+      if (!signal?.aborted) {
+        toast.error(error instanceof Error ? error.message : "Gagal memuat pengajuan pembayaran.");
+>>>>>>> e3b245bd40389fcb388fa69dac567f5617ff8cf6
       }
     } finally {
       if (!signal?.aborted) setLoading(false);
@@ -84,6 +108,7 @@ export default function AdminIuranPage() {
 
   React.useEffect(() => {
     const controller = new AbortController();
+<<<<<<< HEAD
     const requestsParams = new URLSearchParams({ period, status: "awaiting_verification" });
     const unpaidParams = new URLSearchParams({ period, status: "pending" });
     void Promise.all([
@@ -109,11 +134,35 @@ export default function AdminIuranPage() {
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {
           toast.error(error instanceof Error ? error.message : "Gagal memuat data iuran.");
+=======
+    const params = new URLSearchParams({
+      period,
+      status: "awaiting_verification",
+    });
+
+    void fetch(`/api/dues?${params}`, { signal: controller.signal })
+      .then(async (response) => {
+        const result = await response.json() as ApiResponse<PaymentRequest[]>;
+        if (!response.ok || !result.success || !result.data) {
+          throw new Error(result.error || "Gagal memuat pengajuan pembayaran.");
+        }
+        if (!controller.signal.aborted) setRequests(result.data);
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          toast.error(error instanceof Error
+            ? error.message
+            : "Gagal memuat pengajuan pembayaran.");
+>>>>>>> e3b245bd40389fcb388fa69dac567f5617ff8cf6
         }
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
+<<<<<<< HEAD
+=======
+
+>>>>>>> e3b245bd40389fcb388fa69dac567f5617ff8cf6
     return () => controller.abort();
   }, [period]);
 
@@ -137,7 +186,11 @@ export default function AdminIuranPage() {
         `Tagihan diproses: ${result.data.generated_count} dibuat, ${result.data.updated_count} diperbarui, ${result.data.skipped_count} dilewati.`
       );
       setLoading(true);
+<<<<<<< HEAD
       await loadDues();
+=======
+      await loadRequests();
+>>>>>>> e3b245bd40389fcb388fa69dac567f5617ff8cf6
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal membuat tagihan.");
     } finally {
@@ -161,7 +214,11 @@ export default function AdminIuranPage() {
         throw new Error(result.error || "Gagal memverifikasi pembayaran.");
       }
       toast.success("Pembayaran diverifikasi dan dicatat di buku kas.");
+<<<<<<< HEAD
       await loadDues();
+=======
+      await loadRequests();
+>>>>>>> e3b245bd40389fcb388fa69dac567f5617ff8cf6
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal memverifikasi pembayaran.");
     } finally {
@@ -175,7 +232,11 @@ export default function AdminIuranPage() {
         categoryText="KasKita · Panel Pengurus"
         badgeText="Verifikasi pembayaran"
         title="Kelola Iuran Warga"
+<<<<<<< HEAD
         description="Buat tagihan periode, lihat warga yang belum membayar, dan verifikasi pembayaran masuk."
+=======
+        description="Buat tagihan periode berjalan dan verifikasi pembayaran sebelum dicatat sebagai pemasukan kas."
+>>>>>>> e3b245bd40389fcb388fa69dac567f5617ff8cf6
         actions={
           <Link
             href="/dashboard/admin"
@@ -270,6 +331,7 @@ export default function AdminIuranPage() {
           )}
         </CardContent>
       </Card>
+<<<<<<< HEAD
 
       <Card className="rounded-2xl">
         <CardHeader>
@@ -307,6 +369,8 @@ export default function AdminIuranPage() {
           )}
         </CardContent>
       </Card>
+=======
+>>>>>>> e3b245bd40389fcb388fa69dac567f5617ff8cf6
     </div>
   );
 }
