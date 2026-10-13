@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 // PUT: Mengubah data transaksi kas (Admin)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSessionFromCookie();
@@ -13,7 +13,7 @@ export async function PUT(
       return Response.json({ success: false, error: "Akses ditolak." }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json() as Record<string, unknown>;
     const description = typeof body.description === "string" ? body.description.trim() : "";
     const category = typeof body.category === "string" ? body.category.trim() : "";
@@ -38,7 +38,7 @@ export async function PUT(
 // DELETE: Menghapus data transaksi kas (Admin)
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSessionFromCookie();
@@ -46,7 +46,7 @@ export async function DELETE(
       return Response.json({ success: false, error: "Akses ditolak." }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase
       .from("ledger_transactions")
