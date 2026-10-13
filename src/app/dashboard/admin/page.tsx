@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
+import { MonthlyDuesSettings } from "@/components/dashboard/monthly-dues-settings";
 import {
   Card,
   CardContent,
@@ -258,6 +259,8 @@ export default function AdminDashboardPage() {
           </Card>
         </div>
       </section>
+
+      <MonthlyDuesSettings />
 
     </div>
   );

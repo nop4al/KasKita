@@ -123,19 +123,18 @@ export default function LaporanKeuanganPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-4 text-slate-800 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="space-y-6 text-slate-900 dark:text-zinc-100">
         {/* HEADER */}
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-blue-600">
+            <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
               KasKita / Dashboard
             </p>
             <h1 className="mt-2 text-3xl font-bold">Laporan Keuangan</h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">
               Rekap seluruh pemasukan dan pengeluaran kas RT.
             </p>
-          </div>
+    </div>
           <div className="flex gap-2">
             <button
               onClick={() => setTampilForm(!tampilForm)}
@@ -145,7 +144,7 @@ export default function LaporanKeuanganPage() {
             </button>
             <button
               onClick={() => window.print()}
-              className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-5 py-3 text-sm font-semibold text-slate-700 dark:text-zinc-200 shadow-sm hover:bg-slate-50 dark:hover:bg-zinc-800"
             >
               🖨️ Cetak
             </button>
@@ -154,8 +153,8 @@ export default function LaporanKeuanganPage() {
 
         {/* FORM PENGELUARAN */}
         {tampilForm && (
-          <section className="rounded-2xl border-2 border-red-200 bg-red-50 p-5">
-            <h2 className="text-lg font-bold text-red-800">
+          <section className="rounded-2xl border-2 border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-5">
+            <h2 className="text-lg font-bold text-red-800 dark:text-red-300">
               Catat Pengeluaran Baru
             </h2>
             <form onSubmit={tambahPengeluaran} className="mt-4 space-y-4">
@@ -167,7 +166,7 @@ export default function LaporanKeuanganPage() {
                     required
                     value={tglKeluar}
                     onChange={(e) => setTglKeluar(e.target.value)}
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-red-500"
+                    className="mt-2 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 outline-none focus:border-red-500"
                   />
                 </label>
                 <label className="text-sm font-medium">
@@ -175,7 +174,7 @@ export default function LaporanKeuanganPage() {
                   <select
                     value={katKeluar}
                     onChange={(e) => setKatKeluar(e.target.value)}
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-red-500"
+                    className="mt-2 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 outline-none focus:border-red-500"
                   >
                     <option value="Fasilitas Umum">Fasilitas Umum</option>
                     <option value="Kebersihan">Kebersihan</option>
@@ -196,7 +195,7 @@ export default function LaporanKeuanganPage() {
                     value={nomKeluar}
                     onChange={(e) => setNomKeluar(e.target.value)}
                     placeholder="Contoh: 180000"
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-red-500"
+                    className="mt-2 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 outline-none focus:border-red-500"
                   />
                 </label>
                 <label className="text-sm font-medium sm:col-span-2">
@@ -206,7 +205,7 @@ export default function LaporanKeuanganPage() {
                     value={ketKeluar}
                     onChange={(e) => setKetKeluar(e.target.value)}
                     placeholder="Contoh: Beli lampu jalan gang 3"
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-red-500"
+                    className="mt-2 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 outline-none focus:border-red-500"
                   />
                 </label>
               </div>
@@ -221,14 +220,14 @@ export default function LaporanKeuanganPage() {
         )}
 
         {/* FILTER */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5">
+        <section className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <label className="flex-1 text-sm font-medium">
               Periode Bulan
               <select
                 value={filterBulan}
                 onChange={(e) => setFilterBulan(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-blue-500"
+                className="mt-2 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 outline-none focus:border-blue-500"
               >
                 <option value="Semua">Semua Periode</option>
                 {daftarBulan.map((bulan) => (
@@ -245,7 +244,7 @@ export default function LaporanKeuanganPage() {
                 onChange={(e) =>
                   setFilterJenis(e.target.value as "Semua" | "Pemasukan" | "Pengeluaran")
                 }
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-blue-500"
+                className="mt-2 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 outline-none focus:border-blue-500"
               >
                 <option value="Semua">Semua Jenis</option>
                 <option value="Pemasukan">Pemasukan</option>
@@ -257,55 +256,55 @@ export default function LaporanKeuanganPage() {
 
         {/* KARTU RINGKASAN */}
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border bg-white p-5">
-            <p className="text-sm text-slate-500">Total Pemasukan</p>
-            <p className="mt-3 break-words text-2xl font-bold text-emerald-600">
+          <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-5">
+            <p className="text-sm text-slate-500 dark:text-zinc-400">Total Pemasukan</p>
+            <p className="mt-3 break-words text-2xl font-bold text-emerald-600 dark:text-emerald-400">
               {formatRupiah(ringkasan.pemasukan)}
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-slate-400 dark:text-zinc-500">
               {data.filter((d) => d.jenis === "Pemasukan").length} transaksi
             </p>
           </div>
-          <div className="rounded-2xl border bg-white p-5">
-            <p className="text-sm text-slate-500">Total Pengeluaran</p>
-            <p className="mt-3 break-words text-2xl font-bold text-red-600">
+          <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-5">
+            <p className="text-sm text-slate-500 dark:text-zinc-400">Total Pengeluaran</p>
+            <p className="mt-3 break-words text-2xl font-bold text-red-600 dark:text-red-400">
               {formatRupiah(ringkasan.pengeluaran)}
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-slate-400 dark:text-zinc-500">
               {data.filter((d) => d.jenis === "Pengeluaran").length} transaksi
             </p>
           </div>
-          <div className="rounded-2xl border bg-white p-5">
-            <p className="text-sm text-slate-500">Saldo Akhir</p>
-            <p className="mt-3 break-words text-2xl font-bold text-blue-600">
+          <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-5">
+            <p className="text-sm text-slate-500 dark:text-zinc-400">Saldo Akhir</p>
+            <p className="mt-3 break-words text-2xl font-bold text-blue-600 dark:text-blue-400">
               {formatRupiah(ringkasan.saldo)}
             </p>
-            <p className="mt-1 text-xs text-slate-400">Saldo saat ini</p>
+            <p className="mt-1 text-xs text-slate-400 dark:text-zinc-500">Saldo saat ini</p>
           </div>
         </section>
 
         {/* RINGKASAN PERIODE TERFILTER */}
         {(filterBulan !== "Semua" || filterJenis !== "Semua") && (
-          <section className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-            <h3 className="text-sm font-bold text-blue-800">
+          <section className="rounded-2xl border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/40 p-5">
+            <h3 className="text-sm font-bold text-blue-800 dark:text-blue-300">
               Ringkasan Periode Terpilih
             </h3>
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
-                <p className="text-xs text-blue-600">Pemasukan</p>
-                <p className="text-lg font-bold text-emerald-700">
+                <p className="text-xs text-blue-600 dark:text-blue-400">Pemasukan</p>
+                <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
                   {formatRupiah(totalTampil.pemasukan)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-blue-600">Pengeluaran</p>
-                <p className="text-lg font-bold text-red-700">
+                <p className="text-xs text-blue-600 dark:text-blue-400">Pengeluaran</p>
+                <p className="text-lg font-bold text-red-700 dark:text-red-300">
                   {formatRupiah(totalTampil.pengeluaran)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-blue-600">Selisih</p>
-                <p className="text-lg font-bold text-blue-700">
+                <p className="text-xs text-blue-600 dark:text-blue-400">Selisih</p>
+                <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
                   {formatRupiah(totalTampil.saldo)}
                 </p>
               </div>
@@ -314,17 +313,17 @@ export default function LaporanKeuanganPage() {
         )}
 
         {/* TABEL LAPORAN */}
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="border-b border-slate-100 p-5">
+        <section className="overflow-hidden rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+          <div className="border-b border-slate-100 dark:border-zinc-800 p-5">
             <h2 className="text-lg font-bold">Rincian Transaksi</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">
               {dataTampil.length} transaksi ditemukan
             </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-162.5 text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+              <thead className="bg-slate-50 dark:bg-zinc-800 text-xs uppercase text-slate-500 dark:text-zinc-400">
                 <tr>
                   <th className="px-5 py-4">Tanggal</th>
                   <th className="px-5 py-4">Jenis</th>
@@ -333,9 +332,9 @@ export default function LaporanKeuanganPage() {
                   <th className="px-5 py-4 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
                 {dataTampil.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50">
+                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800">
                     <td className="whitespace-nowrap px-5 py-4">
                       {item.tanggal}
                     </td>
@@ -343,8 +342,8 @@ export default function LaporanKeuanganPage() {
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${
                           item.jenis === "Pemasukan"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-red-50 text-red-700"
+                            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
+                            : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300"
                         }`}
                       >
                         {item.jenis}
@@ -352,11 +351,11 @@ export default function LaporanKeuanganPage() {
                     </td>
                     <td className="px-5 py-4">
                       <p className="font-semibold">{item.kategori}</p>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
                         {item.keterangan || "-"}
                       </p>
                       {item.detailIuran && item.detailIuran.length > 0 && (
-                        <p className="mt-1 text-xs text-blue-500">
+                        <p className="mt-1 text-xs text-blue-500 dark:text-blue-400">
                           {item.detailIuran.length} warga
                         </p>
                       )}
@@ -364,8 +363,8 @@ export default function LaporanKeuanganPage() {
                     <td
                       className={`whitespace-nowrap px-5 py-4 font-semibold ${
                         item.jenis === "Pemasukan"
-                          ? "text-emerald-600"
-                          : "text-red-600"
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-red-600 dark:text-red-400"
                       }`}
                     >
                       {item.jenis === "Pemasukan" ? "+" : "-"}
@@ -376,14 +375,14 @@ export default function LaporanKeuanganPage() {
                         {item.detailIuran && item.detailIuran.length > 0 && (
                           <button
                             onClick={() => setTransaksiTerpilih(item)}
-                            className="rounded-lg border border-blue-100 px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50"
+                            className="rounded-lg border border-blue-100 dark:border-blue-900 px-3 py-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50"
                           >
                             Detail
                           </button>
                         )}
                         <button
                           onClick={() => hapusTransaksi(item.id)}
-                          className="rounded-lg border border-red-100 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
+                          className="rounded-lg border border-red-100 dark:border-red-900 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50"
                         >
                           Hapus
                         </button>
@@ -395,7 +394,7 @@ export default function LaporanKeuanganPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-5 py-12 text-center text-slate-500"
+                      className="px-5 py-12 text-center text-slate-500 dark:text-zinc-400"
                     >
                       Belum ada transaksi pada periode ini.
                     </td>
@@ -403,12 +402,12 @@ export default function LaporanKeuanganPage() {
                 )}
               </tbody>
               {dataTampil.length > 0 && (
-                <tfoot className="border-t-2 border-slate-200 bg-slate-50">
+                <tfoot className="border-t-2 border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800">
                   <tr>
                     <td colSpan={3} className="px-5 py-4 text-right font-bold">
                       Total Pemasukan
                     </td>
-                    <td className="px-5 py-4 font-bold text-emerald-600">
+                    <td className="px-5 py-4 font-bold text-emerald-600 dark:text-emerald-400">
                       {formatRupiah(totalTampil.pemasukan)}
                     </td>
                     <td></td>
@@ -417,7 +416,7 @@ export default function LaporanKeuanganPage() {
                     <td colSpan={3} className="px-5 py-4 text-right font-bold">
                       Total Pengeluaran
                     </td>
-                    <td className="px-5 py-4 font-bold text-red-600">
+                    <td className="px-5 py-4 font-bold text-red-600 dark:text-red-400">
                       {formatRupiah(totalTampil.pengeluaran)}
                     </td>
                     <td></td>
@@ -426,7 +425,7 @@ export default function LaporanKeuanganPage() {
                     <td colSpan={3} className="px-5 py-4 text-right font-bold">
                       Selisih
                     </td>
-                    <td className="px-5 py-4 font-bold text-blue-600">
+                    <td className="px-5 py-4 font-bold text-blue-600 dark:text-blue-400">
                       {formatRupiah(totalTampil.saldo)}
                     </td>
                     <td></td>
@@ -436,55 +435,54 @@ export default function LaporanKeuanganPage() {
             </table>
           </div>
         </section>
-      </div>
 
       {/* MODAL DETAIL IURAN */}
       {transaksiTerpilih && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-900 p-6 shadow-xl">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold">Detail Iuran Warga</h3>
               <button
                 onClick={() => setTransaksiTerpilih(null)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 dark:text-zinc-500 hover:text-slate-600"
               >
                 ✕
               </button>
             </div>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">
               {transaksiTerpilih.keterangan} — {transaksiTerpilih.tanggal}
             </p>
 
             <div className="mt-4 max-h-80 overflow-y-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                <thead className="bg-slate-50 dark:bg-zinc-800 text-xs uppercase text-slate-500 dark:text-zinc-400">
                   <tr>
                     <th className="px-3 py-2">Nama Warga</th>
                     <th className="px-3 py-2">Blok</th>
                     <th className="px-3 py-2 text-right">Nominal</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
                   {transaksiTerpilih.detailIuran?.map((detail, idx) => (
                     <tr key={idx}>
                       <td className="px-3 py-2 font-medium">
                         {detail.namaWarga}
                       </td>
-                      <td className="px-3 py-2 text-slate-500">
+                      <td className="px-3 py-2 text-slate-500 dark:text-zinc-400">
                         {detail.blok || "-"}
                       </td>
-                      <td className="px-3 py-2 text-right font-semibold text-emerald-600">
+                      <td className="px-3 py-2 text-right font-semibold text-emerald-600 dark:text-emerald-400">
                         {formatRupiah(detail.nominal)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="border-t border-slate-200">
+                <tfoot className="border-t border-slate-200 dark:border-zinc-700">
                   <tr>
                     <td colSpan={2} className="px-3 py-2 font-bold">
                       Total
                     </td>
-                    <td className="px-3 py-2 text-right font-bold text-emerald-700">
+                    <td className="px-3 py-2 text-right font-bold text-emerald-700 dark:text-emerald-300">
                       {formatRupiah(transaksiTerpilih.nominal)}
                     </td>
                   </tr>
@@ -494,13 +492,13 @@ export default function LaporanKeuanganPage() {
 
             <button
               onClick={() => setTransaksiTerpilih(null)}
-              className="mt-4 w-full rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200"
+              className="mt-4 w-full rounded-xl bg-slate-100 dark:bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700"
             >
               Tutup
             </button>
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }
